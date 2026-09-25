@@ -37,20 +37,20 @@ const translations = {
     // Calendar
     months: ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"],
     weekdays: ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"],
+    show_completed: "Show completed",
 
-    // App Empty State
-    welcome: "Welcome to Todo Calendar",
-    welcome_desc_1: "There is currently no markdown file bound to this plugin in this vault.",
-    welcome_desc_2: "Click the button below to create todo-calendar.md in the root directory directly, or specify an existing markdown file.",
-    task_formats: "Task Formats:",
-    create_now: "Create todo-calendar.md now",
-    select_existing_file: "Select existing file",
+    // TaskItem
+    open_in_note: "Open in note",
 
     // Settings
     settings_language_name: "Language",
     settings_language_desc: "Choose the display language for the Todo Calendar view.",
-    settings_target_name: "Target File",
-    settings_target_desc: "The markdown file to load and save tasks.",
+    settings_target_name: "Inbox file",
+    settings_target_desc: "Tasks are read from your whole vault. New tasks added from the calendar are saved to this file, and its undated tasks appear under \"No Deadline Tasks\".",
+    settings_include_folders_name: "Include folders",
+    settings_include_folders_desc: "Only scan these folders for tasks (one per line). Leave empty to scan the whole vault.",
+    settings_exclude_folders_name: "Exclude folders",
+    settings_exclude_folders_desc: "Never scan these folders for tasks (one per line), e.g. your templates folder.",
     settings_change_btn: "Change",
     settings_open_sidebar_name: "Open in Right Sidebar",
     settings_open_sidebar_desc: "When enabled, opening the calendar will place it in the right sidebar instead of the main workspace. Requires restarting the plugin to take effect.",
@@ -87,20 +87,20 @@ const translations = {
     // Calendar
     months: ["1月", "2月", "3月", "4月", "5月", "6月", "7月", "8月", "9月", "10月", "11月", "12月"],
     weekdays: ["日", "一", "二", "三", "四", "五", "六"],
+    show_completed: "顯示已完成",
 
-    // App Empty State
-    welcome: "歡迎使用 Todo Calendar",
-    welcome_desc_1: "目前在此庫中沒有與此插件綁定的 markdown 檔案。",
-    welcome_desc_2: "點擊下方按鈕直接在根目錄創建 todo-calendar.md，或指定一個現有 markdown 檔案。",
-    task_formats: "代辦事項格式：",
-    create_now: "立即建立 todo-calendar.md",
-    select_existing_file: "選擇現有檔案",
+    // TaskItem
+    open_in_note: "在筆記中開啟",
 
     // Settings
     settings_language_name: "語言",
     settings_language_desc: "選擇 Todo Calendar 面板的顯示語言。",
-    settings_target_name: "目標檔案",
-    settings_target_desc: "用來讀取與儲存待辦事項的 Markdown 檔案。",
+    settings_target_name: "收件匣檔案",
+    settings_target_desc: "待辦事項會從整個筆記庫讀取。從月曆新增的事項會儲存到此檔案，其中無期限的事項會顯示在「無期限事項」。",
+    settings_include_folders_name: "包含的資料夾",
+    settings_include_folders_desc: "只掃描這些資料夾中的待辦事項（每行一個）。留空則掃描整個筆記庫。",
+    settings_exclude_folders_name: "排除的資料夾",
+    settings_exclude_folders_desc: "不掃描這些資料夾中的待辦事項（每行一個），例如範本資料夾。",
     settings_change_btn: "變更",
     settings_open_sidebar_name: "在右側邊欄開啟",
     settings_open_sidebar_desc: "啟用後，開啟插件會將面板開啟於右側邊欄而非主畫面。變更此選項須重啟插件。",

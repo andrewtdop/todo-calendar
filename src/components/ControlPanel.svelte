@@ -1,6 +1,7 @@
 <script lang="ts">
   import { createEventDispatcher } from "svelte";
   import type { Task } from "../store";
+  import { showCompletedStore } from "../store";
   import TaskItem from "./TaskItem.svelte";
   import { t } from "../i18n";
 
@@ -12,7 +13,9 @@
   let newTaskText = "";
 
   $: dayTasks = selectedDate
-    ? tasks.filter((t) => t.date === selectedDate)
+    ? tasks.filter(
+        (t) => t.date === selectedDate && ($showCompletedStore || !t.completed),
+      )
     : [];
 
   function handleUpdate(event: CustomEvent) {

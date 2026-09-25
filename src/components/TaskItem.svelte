@@ -1,11 +1,14 @@
 <script lang="ts">
-  import { createEventDispatcher } from 'svelte';
+  import { createEventDispatcher, getContext } from 'svelte';
   import type { Task } from '../store';
   import { t } from '../i18n';
 
   export let task: Task;
 
   const dispatch = createEventDispatcher();
+  const openTask = getContext<((task: Task) => void) | undefined>('openTask');
+
+  $: fileName = task.filePath.split('/').pop()?.replace(/\.md$/, '') ?? '';
 
   function toggleComplete() {
     dispatch('update', {
@@ -41,10 +44,15 @@
     on:change={toggleComplete}
     class="task-checkbox"
   />
-  <span class="task-text">{task.text}</span>
+  <!-- svelte-ignore a11y-click-events-have-key-events a11y-no-static-element-interactions -->
+  <span class="task-text" title={$t.open_in_note} on:click={() => openTask?.(task)}>
+    {task.text}
+    {#if task.recurrence}<span class="task-recurrence" title={task.recurrence}>🔁</span>{/if}
+    <span class="task-source" title={task.filePath}>{fileName}</span>
+  </span>
   <input 
     type="date" 
-    value={task.date} 
+    value={task.date ?? ''} 
     on:change={changeDate}
     class="task-date"
   />
@@ -85,6 +93,23 @@
   .task-text {
     flex-grow: 1;
     font-size: 0.95em;
+    cursor: pointer;
+    min-width: 0;
+    overflow-wrap: anywhere;
+  }
+  .task-text:hover {
+    color: var(--text-accent);
+  }
+
+  .task-recurrence {
+    font-size: 0.8em;
+    margin-left: 0.25rem;
+  }
+
+  .task-source {
+    display: block;
+    font-size: 0.75em;
+    color: var(--text-faint);
   }
   
   .task-checkbox {

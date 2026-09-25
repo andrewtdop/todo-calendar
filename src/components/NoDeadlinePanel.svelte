@@ -1,6 +1,7 @@
 <script lang="ts">
   import { createEventDispatcher } from "svelte";
   import type { Task } from "../store";
+  import { showCompletedStore } from "../store";
   import TaskItem from "./TaskItem.svelte";
   import { t } from "../i18n";
 
@@ -11,7 +12,9 @@
   let showNoDeadlineInput = false;
   let newNoDeadlineText = "";
 
-  $: undatedTasks = tasks.filter((t) => t.date === null);
+  $: undatedTasks = tasks.filter(
+    (t) => t.date === null && ($showCompletedStore || !t.completed),
+  );
 
   function handleUpdate(event: CustomEvent) {
     dispatch("updateTask", event.detail);

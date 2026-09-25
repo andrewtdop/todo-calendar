@@ -20,7 +20,7 @@ This plugin transforms your Markdown task list into an intuitive calendar and ti
 - **Visual Calendar**: A monthly calendar interface that clearly highlights dates with tasks and their completion status.
 - **Bi-directional Sync**: Any creation, modification, deletion, or completion of tasks on the calendar panel is instantly and accurately synced to your Markdown file. Conversely, editing the file externally will update the calendar in real time.
 - **Internationalization (i18n)**: Supports English and Traditional Chinese (zh-TW), which can be switched instantly in the settings.
-- **Flexible Binding**: Binds to `todo-calendar.md` in the root directory by default, but also supports binding to any Markdown file in your vault via FuzzySearch in the settings menu.
+- **Vault-wide Tasks**: Reads tasks from every note in your vault (optionally limited to or excluding specific folders), including [Tasks](https://github.com/obsidian-tasks-group/obsidian-tasks) plugin emoji dates and [Kanban](https://github.com/mgmeyers/obsidian-kanban) boards. New tasks created from the calendar go to an inbox file (`todo-calendar.md` by default).
 - **Customizable Open Location**: Can be opened in the main workspace or toggled to open in the right sidebar (where backlinks normally reside).
 - **Categorization & Filtering**: Built-in filter panels (overdue, next 3 days, next 7 days, etc.) and a dedicated panel for managing tasks with no deadlines.
 
@@ -29,13 +29,25 @@ This plugin transforms your Markdown task list into an intuitive calendar and ti
 ## 🛠️ Usage
 
 1. Enable the plugin and click the **Calendar icon** on the left Ribbon.
-2. The system will guide you to create `todo-calendar.md` in the root directory, or you can choose an existing file in the settings.
-3. **Task Format**: Use standard Markdown task formatting and append a date tag `@ YYYY-MM-DD`. The calendar will automatically parse them. For example:
+2. The calendar immediately shows tasks from across your vault. New tasks you add from the calendar are written to the inbox file (`todo-calendar.md` by default, changeable in settings).
+3. **Task Formats**: Any Markdown task with a date is placed on the calendar until it is completed:
    ```markdown
+   - [ ] Finish paper ready for Populism conference 📅 2025-09-15 🛫 2025-06-20
+   - [ ] Pay credit cards 🔁 every month 📅 2025-08-03
+   - [ ] Kanban card @{2025-07-18}
    - [ ] Buy milk @ 2026-07-18
-   - [x] Write code @ 2026-07-17
-   - [ ] Task with no deadline @ none
+   - [ ] Task with no deadline
    ```
+   | Syntax | Source | Used as calendar date |
+   | --- | --- | --- |
+   | `📅 YYYY-MM-DD` | Tasks plugin (due) | Yes (first choice) |
+   | `@ YYYY-MM-DD` / `@ none` | Todo Calendar (legacy) | Yes |
+   | `⏳ YYYY-MM-DD` | Tasks plugin (scheduled) | If there is no due date |
+   | `@{YYYY-MM-DD}` | Kanban plugin | If there is no due or scheduled date |
+
+   Other Tasks fields (`🛫` start, `🔁` recurrence, priorities, `🆔`, block IDs, tags) are preserved when the calendar edits a line.
+4. **Completing tasks**: Completed (`[x]`) and cancelled (`[-]`) tasks are hidden from the calendar; use the **Show completed** toggle to see them. When the Tasks plugin is installed, checking a task off from the calendar uses the Tasks plugin itself, so `✅` done dates and recurring tasks (`🔁`) behave exactly as they do in your notes. Without it, the calendar adds the `✅` date and creates the next occurrence of common recurrence rules (`every day/week/month/year`, `every N weeks`, `every weekday`, `every Monday`, `every month on the 3rd`, `… when done`).
+5. Click a task's text to jump to the note it lives in. Archived Kanban cards are ignored.
 
 ---
 
@@ -49,12 +61,14 @@ This project combines the **Obsidian API** with the **Svelte** framework, ensuri
 - `todo-view.ts`: The core view class that bridges Obsidian and Svelte. Upon `onOpen()`, it instantiates the Svelte app (`App.svelte`) and passes the Obsidian `App` and `Plugin` instances as props.
 - `store.ts`: Uses Svelte Stores for global state management, including the task list (`tasksStore`), the currently bound file (`currentFileStore`), and the selected date (`selectedDateStore`).
 - `i18n.ts`: A lightweight internationalization system based on Svelte Stores. It uses a `derived` store to automatically respond to language switches, allowing instantaneous UI text updates without reloading the plugin.
-- `parser.ts`: Handles all read and write logic for the Obsidian Vault, using regular expressions to parse and accurately modify specific lines within Markdown files.
+- `task-format.ts`: Pure functions that parse and rewrite a single task line (Tasks emoji fields, Kanban `@{date}`, legacy `@ date`) and compute recurring-task occurrences.
+- `task-index.ts`: Keeps a vault-wide, per-file task index that is updated incrementally from Obsidian's metadata cache events.
+- `parser.ts`: Parses whole files (skipping code blocks and archived Kanban cards) and performs atomic, verified line edits via `app.vault.process()`, delegating completion to the Tasks plugin API when available.
 
 ### 2. Bi-directional Sync Logic
 
-- **From UI to File (Write)**: When the user interacts with the Svelte panel (e.g., clicking a checkbox or adding a task), events are dispatched to trigger write methods in `parser.ts`. We use `app.vault.process()` or direct line-specific read/write operations to modify the physical Markdown file.
-- **From File to UI (Read)**: In `App.svelte`, we listen to Obsidian's `app.vault.on("modify", ...)` event to capture external file changes. If the modified file matches the bound `$currentFileStore`, it triggers `loadTasks()` to re-parse the file and push the results to `$tasksStore`, which in turn triggers a Svelte re-render.
+- **From UI to File (Write)**: When the user interacts with the Svelte panel (e.g., clicking a checkbox or adding a task), events are dispatched to trigger write methods in `parser.ts`. We use `app.vault.process()` to atomically rewrite the exact task line in whichever note it lives in, after verifying the line has not changed since it was parsed.
+- **From File to UI (Read)**: `TaskIndex` listens to `metadataCache.on("changed")`, `vault.on("delete")` and `vault.on("rename")`. Only the affected file is re-parsed, and the merged result is pushed to `$tasksStore`, which triggers a Svelte re-render.
 
 ### 3. Svelte CSS Scoping
 

@@ -1,6 +1,7 @@
 <script lang="ts">
   import { createEventDispatcher, onMount } from "svelte";
   import type { Task } from "../store";
+  import { showCompletedStore } from "../store";
   import { t } from "../i18n";
 
   export let tasks: Task[] = [];
@@ -116,6 +117,11 @@
     return days;
   })();
 
+  // Completed tasks drop off the calendar unless "Show completed" is on.
+  $: visibleTasks = $showCompletedStore
+    ? tasks
+    : tasks.filter((t) => !t.completed);
+
   function getTaskStatusClass(dateStr: string, currentTasks: Task[]) {
     if (!dateStr) return "";
     const dayTasks = currentTasks.filter((t) => t.date === dateStr);
@@ -133,6 +139,11 @@
     <button on:click={nextMonth}>&gt;</button>
   </div>
 
+  <label class="show-completed">
+    <input type="checkbox" bind:checked={$showCompletedStore} />
+    {$t.show_completed}
+  </label>
+
   <div class="timeline-weekdays">
     {#each $t.weekdays as weekday}
       <div>{weekday}</div>
@@ -147,7 +158,7 @@
           : 'other-month'} {dateStr === todayStr ? 'today' : ''} {dateStr ===
         selectedDate
           ? 'selected'
-          : ''} {getTaskStatusClass(dateStr, tasks)}"
+          : ''} {getTaskStatusClass(dateStr, visibleTasks)}"
         on:click={() => isCurrentMonth && selectDate(dateStr)}
       >
         <span class="day-number">{day}</span>
@@ -165,6 +176,16 @@
   }
   .header h3 {
     margin: 0;
+  }
+  .show-completed {
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+    gap: 0.4rem;
+    font-size: 0.85em;
+    color: var(--text-muted);
+    margin-bottom: 0.5rem;
+    cursor: pointer;
   }
   .timeline-weekdays {
     display: grid;
