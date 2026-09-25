@@ -1,5 +1,5 @@
 <script lang="ts">
-  import { createEventDispatcher, onMount } from "svelte";
+  import { createEventDispatcher } from "svelte";
   import type { Task } from "../store";
   import { t } from "../i18n";
 
@@ -9,7 +9,6 @@
   const dispatch = createEventDispatcher();
 
   let currentDate = new Date();
-  let calendarEl: HTMLDivElement;
 
   const today = new Date();
   const todayStr = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, "0")}-${String(today.getDate()).padStart(2, "0")}`;
@@ -17,63 +16,15 @@
   $: currentYear = currentDate.getFullYear();
   $: currentMonth = currentDate.getMonth();
 
-  onMount(() => {
-    console.log("[Calendar] Component mounted successfully");
-    console.log("[Calendar] calendarEl bound?", !!calendarEl);
-    // 使用原生 DOM 事件測試點擊是否能到達元素
-    if (calendarEl) {
-      calendarEl.addEventListener("click", (e) => {
-        console.log(
-          "[Calendar] Native DOM click detected on:",
-          (e.target as HTMLElement).tagName,
-          (e.target as HTMLElement).className,
-        );
-      });
-      // 檢查 computed style 中是否有 pointer-events: none
-      const style = window.getComputedStyle(calendarEl);
-      console.log("[Calendar] pointer-events:", style.pointerEvents);
-      // 檢查所有父元素的 pointer-events
-      let el: HTMLElement | null = calendarEl;
-      while (el) {
-        const s = window.getComputedStyle(el);
-        if (s.pointerEvents === "none") {
-          console.warn(
-            "[Calendar] FOUND pointer-events:none on:",
-            el.tagName,
-            el.className,
-          );
-        }
-        el = el.parentElement;
-      }
-    }
-    // document 層級的點擊測試
-    document.addEventListener("click", (e) => {
-      const target = e.target as HTMLElement;
-      if (
-        target.closest(".calendar-container") ||
-        target.closest(".todo-app-container")
-      ) {
-        console.log(
-          "[Calendar] Document-level click in calendar area:",
-          target.tagName,
-          target.className,
-        );
-      }
-    });
-  });
-
   function prevMonth() {
-    console.log("[Calendar] prevMonth clicked");
     currentDate = new Date(currentYear, currentMonth - 1, 1);
   }
 
   function nextMonth() {
-    console.log("[Calendar] nextMonth clicked");
     currentDate = new Date(currentYear, currentMonth + 1, 1);
   }
 
   function selectDate(dateStr: string) {
-    console.log("[Calendar] selectDate clicked:", dateStr);
     dispatch("select", dateStr);
   }
 
@@ -126,7 +77,7 @@
   }
 </script>
 
-<div class="calendar-container" bind:this={calendarEl}>
+<div class="calendar-container">
   <div class="header">
     <button on:click={prevMonth}>&lt;</button>
     <h3>{$t.months[currentMonth]} {currentYear}</h3>
@@ -195,7 +146,6 @@
     justify-content: center;
     border-radius: 4px;
     cursor: pointer;
-    position: relative;
     position: relative;
     background-color: transparent !important;
     background-image: none !important;
