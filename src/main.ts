@@ -2,28 +2,54 @@ import { Plugin, WorkspaceLeaf, PluginSettingTab, App, Setting } from "obsidian"
 import { TodoView, VIEW_TYPE_TODO } from "./todo-view";
 import { currentLanguage, t, type Language } from "./i18n";
 import { get } from "svelte/store";
-import { currentFileStore } from "./store";
+import { currentFileStore, showCompletedStore } from "./store";
 import { FileSuggestModal } from "./FileSuggestModal";
+import { TaskIndex, parseFolderList } from "./task-index";
 
 interface TodoCalendarSettings {
   language: Language;
   targetFile: string;
   openInRightSidebar: boolean;
+  includeFolders: string;
+  excludeFolders: string;
+  showCompleted: boolean;
 }
 
 const DEFAULT_SETTINGS: TodoCalendarSettings = {
   language: "en",
   targetFile: "todo-calendar.md",
   openInRightSidebar: false,
+  includeFolders: "",
+  excludeFolders: "",
+  showCompleted: false,
 };
 
 export default class TodoCalendarPlugin extends Plugin {
   declare settings: TodoCalendarSettings;
+  taskIndex!: TaskIndex;
 
   async onload() {
     await this.loadSettings();
     currentLanguage.set(this.settings.language);
     currentFileStore.set(this.settings.targetFile);
+    showCompletedStore.set(this.settings.showCompleted);
+
+    this.taskIndex = new TaskIndex(this.app, () => ({
+      includeFolders: parseFolderList(this.settings.includeFolders),
+      excludeFolders: parseFolderList(this.settings.excludeFolders),
+    }));
+    this.app.workspace.onLayoutReady(() => {
+      this.taskIndex.start((ref) => this.registerEvent(ref));
+    });
+
+    this.register(
+      showCompletedStore.subscribe((value) => {
+        if (this.settings.showCompleted !== value) {
+          this.settings.showCompleted = value;
+          void this.saveSettings();
+        }
+      }),
+    );
 
     this.registerView(
       VIEW_TYPE_TODO,
@@ -126,6 +152,34 @@ class TodoCalendarSettingTab extends PluginSettingTab {
             });
           }).open();
         });
+      });
+
+    new Setting(containerEl)
+      .setName($t.settings_include_folders_name)
+      .setDesc($t.settings_include_folders_desc)
+      .addTextArea((text) => {
+        text
+          .setPlaceholder("Projects\nBoards")
+          .setValue(this.plugin.settings.includeFolders)
+          .onChange(async (value) => {
+            this.plugin.settings.includeFolders = value;
+            await this.plugin.saveSettings();
+          });
+        text.inputEl.addEventListener("blur", () => void this.plugin.taskIndex.rebuild());
+      });
+
+    new Setting(containerEl)
+      .setName($t.settings_exclude_folders_name)
+      .setDesc($t.settings_exclude_folders_desc)
+      .addTextArea((text) => {
+        text
+          .setPlaceholder("Templates\nArchive")
+          .setValue(this.plugin.settings.excludeFolders)
+          .onChange(async (value) => {
+            this.plugin.settings.excludeFolders = value;
+            await this.plugin.saveSettings();
+          });
+        text.inputEl.addEventListener("blur", () => void this.plugin.taskIndex.rebuild());
       });
 
     new Setting(containerEl)

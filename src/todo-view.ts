@@ -31,7 +31,6 @@ export class TodoView extends ItemView {
       target: this.contentEl,
       props: {
         app: this.app,
-        plugin: this.plugin
       }
     });
   }
